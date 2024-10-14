@@ -1,0 +1,17 @@
+name: check tests and linter
+
+on:
+    - push
+
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Install dependencies
+              run: |
+                pip install poetry
+                make install
+            - name: Check linter
+              run: make lint
