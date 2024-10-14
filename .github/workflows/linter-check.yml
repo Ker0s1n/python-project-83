@@ -1,4 +1,4 @@
-name: check tests and linter
+name: check linter
 
 on:
     - push
