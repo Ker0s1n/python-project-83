@@ -5,9 +5,10 @@ from flask import (
     render_template,
     request,
     redirect,
-    url_for
+    url_for,
+    flash
 )
-from page_analyzer import db_module
+from page_analyzer import db_module, validator
 
 
 load_dotenv()
@@ -25,7 +26,6 @@ def home_page():
 
 @app.post('/')
 def post_url():
-    conn = db_module.connect_db(DATABASE_URL)
     url = request.form.to_dict()
     errors = validator.validate(url)
 
@@ -35,3 +35,8 @@ def post_url():
             url=url,
             errors=errors
         )
+    conn = db_module.connect_db(DATABASE_URL)
+    id = db_module.add_url(conn, url)
+    flash(f'URL был успешно добавлен c id: {id}', 'success')
+    db_module.close(conn)
+    return f'URL был успешно добавлен c id: {id}'
