@@ -6,21 +6,29 @@ from flask import (
     request,
     redirect,
     url_for,
-    flash
+    flash,
+    get_flashed_messages
 )
 from page_analyzer import db_module, validator
 
 
 load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
+
+
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 
 @app.route('/')
 def home_page():
+    errors = {}
+    url_adress = request.args.get('url_adress', '')
     return render_template(
-        'page.html'
+        'index.html',
+        search=url_adress,
+        messages=get_flashed_messages(with_categories=True),
+        errors=errors
     )
 
 
@@ -30,13 +38,17 @@ def post_url():
     errors = validator.validate(url)
 
     if errors:
+        flash('URL не добавлен', 'error')
         return render_template(
-            'page.html',
-            url=url,
+            'index.html',
+            search=url['url_adress'],
+            messages=get_flashed_messages(with_categories=True),
             errors=errors
-        )
+        ), 422
+
     conn = db_module.connect_db(DATABASE_URL)
     id = db_module.add_url(conn, url)
-    flash(f'URL был успешно добавлен c id: {id}', 'success')
     db_module.close(conn)
-    return f'URL был успешно добавлен c id: {id}'
+
+    flash(f'URL был успешно добавлен c id: {id}', 'success')
+    return redirect(url_for('home_page'), code=302)

@@ -19,7 +19,7 @@ def add_url(conn, url):
     RETURNING id
     '''
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
-        curs.execute(query, url.get('name'))
+        curs.execute(query, (url.get('url_adress'),))
         id = curs.fetchone()['id']
         conn.commit()
         return id
