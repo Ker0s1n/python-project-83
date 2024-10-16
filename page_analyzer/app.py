@@ -23,7 +23,7 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 @app.route('/')
 def home_page():
     errors = {}
-    url_adress = request.args.get('url_adress', '')
+    url_adress = request.args.get('url', '')
     return render_template(
         'index.html',
         search=url_adress,
@@ -41,7 +41,7 @@ def post_url():
         flash('URL не добавлен', 'error')
         return render_template(
             'index.html',
-            search=url['url_adress'],
+            search=url['url'],
             messages=get_flashed_messages(with_categories=True),
             errors=errors
         ), 422
@@ -52,3 +52,19 @@ def post_url():
 
     flash(f'URL был успешно добавлен c id: {id}', 'success')
     return redirect(url_for('home_page'), code=302)
+
+
+@app.route('/urls/<int:id>')
+def get_url(id):
+    conn = db_module.connect_db(DATABASE_URL)
+    url_info = db_module.get_url(conn, id)
+
+    if not url_info:
+        db_module.close(conn)
+        return '<h1>Page not found</h1>'
+
+    db_module.close(conn)
+    return render_template(
+        'urls/id_info.html',
+        url_info=url_info
+    )

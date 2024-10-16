@@ -12,14 +12,14 @@
   <form class="d-flex" action="{{ url_for('home_page') }}" method="post">
       <div class="input-group">
         <span class="input-group-text" id="basic-addon3">Введите адрес</span>
-        <input type="url" class="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4" placeholder="https://www.example.com" name="url_adress" value="{{ search }}">
+        <input type="url" class="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4" placeholder="https://www.example.com" name="url" value="{{ search }}">
         <button class="btn btn-primary text-uppercase" type="submit" id="button-addon2">Проверить</button>
       </div>
   </form>
-  {% if errors['url_adress'] %}
+  {% if errors['url'] %}
   <h1></h1>
   <div class="position-relative py-2 px-4 w-auto">
-    <div class="badge text-bg-dark position-absolute top-50 start-50 translate-middle">{{ errors['url_adress'] }}</div>
+    <div class="badge text-bg-dark position-absolute top-50 start-50 translate-middle">{{ errors['url'] }}</div>
   </div>
   {% endif %}
 </div>
