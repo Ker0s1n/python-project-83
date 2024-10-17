@@ -33,3 +33,21 @@ def get_url(conn, id):
         if not url_info:
             return None
         return url_info
+
+
+def show_urls(conn):
+    query = 'SELECT * FROM urls ORDER BY id DESC'
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query)
+        urls_all = curs.fetchall()
+        return urls_all
+
+
+def url_unique_id(conn, url):
+    query = 'SELECT id, name FROM urls WHERE name = %s'
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (url['url'],))
+        url_id = curs.fetchone()
+        if not url_id:
+            return None
+        return url_id['id']

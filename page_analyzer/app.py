@@ -47,11 +47,18 @@ def post_url():
         ), 422
 
     conn = db_module.connect_db(DATABASE_URL)
+
+    id = db_module.url_unique_id(conn, url)
+    if id is not None:
+        db_module.close(conn)
+        flash(f'URL был добавлен ранее c id: {id}', 'warning')
+        return redirect(url_for('get_url', id=id), code=302)
+
     id = db_module.add_url(conn, url)
     db_module.close(conn)
 
     flash(f'URL был успешно добавлен c id: {id}', 'success')
-    return redirect(url_for('home_page'), code=302)
+    return redirect(url_for('get_url', id=id), code=302)
 
 
 @app.route('/urls/<int:id>')
@@ -61,10 +68,25 @@ def get_url(id):
 
     if not url_info:
         db_module.close(conn)
-        return '<h1>Page not found</h1>'
+        return render_template('urls/not_found.html')
 
     db_module.close(conn)
     return render_template(
         'urls/id_info.html',
-        url_info=url_info
+        url_info=url_info,
+        messages=get_flashed_messages(with_categories=True)
+    )
+
+
+@app.route('/urls')
+def get_urls_list():
+    messages = get_flashed_messages(with_categories=True)
+    conn = db_module.connect_db(DATABASE_URL)
+    urls = db_module.show_urls(conn)
+    db_module.close(conn)
+
+    return render_template(
+        'urls/show_urls.html',
+        urls=urls,
+        messages=messages
     )

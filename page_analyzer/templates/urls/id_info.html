@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block title %}Информация о сайте{% endblock %}
+
+{% block content %}
+<div class="container my-3">
+    <h1>Сайт: {{ url_info['name'] }}</h1>
+    <table class="table table-bordered table-striped" data-test="url">
+        <tr>
+            <td>ID</td>
+            <td>Имя</td>
+            <td>Дата создания</td>
+        </tr>
+        <tr>
+            <td>{{ url_info['id'] }}</td>
+            <td>{{ url_info['name'] }}</td>
+            <td>{{ url_info['created_at'] }}</td>
+        </tr>
+    </table>
+</div>
+{% endblock %}
