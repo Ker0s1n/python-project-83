@@ -36,7 +36,24 @@ def get_url(conn, id):
 
 
 def show_urls(conn):
-    query = 'SELECT * FROM urls ORDER BY id DESC'
+    query = '''
+    WITH last_check AS (
+        SELECT DISTINCT ON (url_id)
+            url_id,
+            created_at
+        FROM url_cheks
+        ORDER BY url_id, created_at DESC
+    )
+    SELECT
+        urls.id,
+        urls.name,
+        last_check.created_at as check
+    FROM urls
+    LEFT JOIN last_check
+    ON urls.id = last_check.url_id
+    ORDER BY urls.id
+    DESC
+    '''
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(query)
         urls_all = curs.fetchall()
@@ -51,3 +68,33 @@ def url_unique_id(conn, url):
         if not url_id:
             return None
         return url_id['id']
+
+
+def add_url_check(conn, url_check):
+    query = '''
+    INSERT INTO url_cheks (
+    url_id)
+    VALUES (%s)
+    '''
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(
+            query,
+            (
+                url_check.get('id'),
+                # url_check.get('status_code'),
+                # url_check.get('h1'),
+                # url_check.get('title'),
+                # url_check.get('description')
+                # status_code, h1, title, description
+            )
+        )
+        conn.commit()
+        return url_check.get('id')
+
+
+def show_url_checks(conn, id):
+    query = 'SELECT * FROM url_cheks WHERE url_id = %s ORDER BY id DESC'
+    with conn.cursor(cursor_factory=RealDictCursor) as curs:
+        curs.execute(query, (id,))
+        url_checks_all = curs.fetchall()
+        return url_checks_all

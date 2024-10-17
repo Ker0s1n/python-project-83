@@ -65,6 +65,7 @@ def post_url():
 def get_url(id):
     conn = db_module.connect_db(DATABASE_URL)
     url_info = db_module.get_url(conn, id)
+    url_check = db_module.show_url_checks(conn, id)
 
     if not url_info:
         db_module.close(conn)
@@ -74,6 +75,7 @@ def get_url(id):
     return render_template(
         'urls/id_info.html',
         url_info=url_info,
+        url_check=url_check,
         messages=get_flashed_messages(with_categories=True)
     )
 
@@ -90,3 +92,19 @@ def get_urls_list():
         urls=urls,
         messages=messages
     )
+
+
+@app.post('/urls/<int:id>/cheks')
+def post_url_check(id):
+    conn = db_module.connect_db(DATABASE_URL)
+    url_info = db_module.get_url(conn, id)
+
+    # if errors:
+    #     flash('Произошла ошибка: сайт не прошёл проверку', 'error')
+    #     return redirect(url_for('get_url', id=id), code=406)
+
+    id = db_module.add_url_check(conn, url_info)
+    db_module.close(conn)
+
+    flash(f'проверка URL была успешно добавлена для id: {id}', 'success')
+    return redirect(url_for('get_url', id=id), code=302)
