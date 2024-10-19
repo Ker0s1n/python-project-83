@@ -19,7 +19,7 @@ def add_url(conn, url):
     RETURNING id
     '''
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
-        curs.execute(query, (url.get('url'),))
+        curs.execute(query, (url,))
         id = curs.fetchone()['id']
         conn.commit()
         return id
@@ -40,14 +40,16 @@ def show_urls(conn):
     WITH last_check AS (
         SELECT DISTINCT ON (url_id)
             url_id,
-            created_at
+            created_at,
+            status_code
         FROM url_cheks
         ORDER BY url_id, created_at DESC
     )
     SELECT
         urls.id,
         urls.name,
-        last_check.created_at as check
+        last_check.created_at as check,
+        last_check.status_code as status
     FROM urls
     LEFT JOIN last_check
     ON urls.id = last_check.url_id
@@ -63,29 +65,28 @@ def show_urls(conn):
 def url_unique_id(conn, url):
     query = 'SELECT id, name FROM urls WHERE name = %s'
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
-        curs.execute(query, (url['url'],))
+        curs.execute(query, (url,))
         url_id = curs.fetchone()
         if not url_id:
             return None
         return url_id['id']
 
 
-def add_url_check(conn, url_check):
+def add_url_check(conn, url_check, status_code, analysis):
     query = '''
     INSERT INTO url_cheks (
-    url_id)
-    VALUES (%s)
+    url_id, status_code, h1, title, description)
+    VALUES (%s, %s, %s, %s, %s)
     '''
     with conn.cursor(cursor_factory=RealDictCursor) as curs:
         curs.execute(
             query,
             (
                 url_check.get('id'),
-                # url_check.get('status_code'),
-                # url_check.get('h1'),
-                # url_check.get('title'),
-                # url_check.get('description')
-                # status_code, h1, title, description
+                status_code,
+                analysis.get('h1'),
+                analysis.get('title'),
+                analysis.get('description')
             )
         )
         conn.commit()

@@ -1,5 +1,7 @@
 import os
+import requests
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 from flask import (
     Flask,
     render_template,
@@ -35,26 +37,30 @@ def home_page():
 @app.post('/')
 def post_url():
     url = request.form.to_dict()
-    errors = validator.validate(url)
+    parced_url = urlparse(url['url'])
+    normalized_url = '://'.join(
+        [parced_url.scheme, parced_url.netloc]
+    ) if parced_url.scheme else ''
+    errors = validator.validate(normalized_url)
 
     if errors:
         flash('URL не добавлен', 'error')
         return render_template(
             'index.html',
-            search=url['url'],
+            search=normalized_url,
             messages=get_flashed_messages(with_categories=True),
             errors=errors
         ), 422
 
     conn = db_module.connect_db(DATABASE_URL)
 
-    id = db_module.url_unique_id(conn, url)
+    id = db_module.url_unique_id(conn, normalized_url)
     if id is not None:
         db_module.close(conn)
         flash(f'URL был добавлен ранее c id: {id}', 'warning')
         return redirect(url_for('get_url', id=id), code=302)
 
-    id = db_module.add_url(conn, url)
+    id = db_module.add_url(conn, normalized_url)
     db_module.close(conn)
 
     flash(f'URL был успешно добавлен c id: {id}', 'success')
@@ -99,11 +105,22 @@ def post_url_check(id):
     conn = db_module.connect_db(DATABASE_URL)
     url_info = db_module.get_url(conn, id)
 
-    # if errors:
-    #     flash('Произошла ошибка: сайт не прошёл проверку', 'error')
-    #     return redirect(url_for('get_url', id=id), code=406)
+    try:
+        response = requests.get(url_info.get('name'))
+    except requests.RequestException:
+        db_module.close(conn)
+        flash('Произошла ошибка при проверке', 'error')
+        return redirect(url_for('get_url', id=id))
 
-    id = db_module.add_url_check(conn, url_info)
+    status = response.status_code
+    analysis = validator.parse_response(response)
+
+    id = db_module.add_url_check(
+        conn,
+        url_info,
+        status,
+        analysis
+    )
     db_module.close(conn)
 
     flash(f'проверка URL была успешно добавлена для id: {id}', 'success')

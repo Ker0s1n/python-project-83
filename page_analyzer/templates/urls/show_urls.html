@@ -10,7 +10,8 @@
             <tr>
                 <td>ID</td>
                 <td>Имя</td>
-                <td>Дата создания</td>
+                <td>Последняя проверка</td>
+                <td>Код ответа</td>
             </tr>
         </thead>
         <tbody class="fs-6 fw-normal">
@@ -20,7 +21,8 @@
                 <td>
                 <a href="{{ url_for('get_url', id=url.id) }}">{{ url.name }}</a>
                 </td>
-                <td>{{ url.check }}</td>
+                <td>{{ url.check or '' }}</td>
+                <td>{{ url.status or '' }}</td>
             </tr>
             {% endfor %}
         </tbody>
