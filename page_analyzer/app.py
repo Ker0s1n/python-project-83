@@ -44,7 +44,7 @@ def post_url():
     errors = validator.validate(normalized_url)
 
     if errors:
-        flash('URL не добавлен', 'error')
+        flash('Некорректный URL', 'error')
         return render_template(
             'index.html',
             search=normalized_url,
@@ -57,13 +57,13 @@ def post_url():
     id = db_module.url_unique_id(conn, normalized_url)
     if id is not None:
         db_module.close(conn)
-        flash(f'URL был добавлен ранее c id: {id}', 'warning')
+        flash('Страница уже существует', 'warning')
         return redirect(url_for('get_url', id=id), code=302)
 
     id = db_module.add_url(conn, normalized_url)
     db_module.close(conn)
 
-    flash(f'URL был успешно добавлен c id: {id}', 'success')
+    flash('Страница успешно добавлена', 'success')
     return redirect(url_for('get_url', id=id), code=302)
 
 
@@ -123,5 +123,5 @@ def post_url_check(id):
     )
     db_module.close(conn)
 
-    flash(f'проверка URL была успешно добавлена для id: {id}', 'success')
+    flash('Страница успешно проверена', 'success')
     return redirect(url_for('get_url', id=id), code=302)
