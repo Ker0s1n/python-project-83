@@ -9,19 +9,12 @@
 <div class="container-lg text-bg-secondary rounded-3 p-3">
   <h1 class="display-1 text-center">Анализатор страниц</h1>
   <h3 class="text-center">Бесплатно проверяйте сайты на SEO-пригодность</h3>
-<<<<<<< Updated upstream
-  <form action="{{ url_for('home_page') }}" method="post" class="d-flex justify-content-center">
-    <label for="text" class="visually-hidden">Url для проверки</label>
-    <input type="text" name="url" placeholder="https://www.example.com" value="{{ search }}" class="form-control form-control-lg" required="">
-    <input type="submit" class="btn btn-primary  btn-lg ms-3 px-5 text-uppercase mx-3" value="Проверить">
-=======
   <form class="d-flex" action="{{ url_for('home_page') }}" method="post">
       <div class="input-group">
         <span class="input-group-text" id="basic-addon3">Введите адрес</span>
         <input type="url" class="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4" placeholder="https://www.example.com" name="url" value="{{ search }}">
         <input class="btn btn-primary text-uppercase" type="submit">
       </div>
->>>>>>> Stashed changes
   </form>
   {% if errors['url'] %}
   <h1></h1>
