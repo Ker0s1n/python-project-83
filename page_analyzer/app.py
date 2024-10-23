@@ -106,7 +106,8 @@ def post_url_check(id):
     url_info = db_module.get_url(conn, id)
 
     try:
-        response = requests.get(url_info.get('name'))
+        response = requests.get(url_info.get('name'), timeout=0.1)
+        response.raise_for_status()
     except requests.RequestException:
         db_module.close(conn)
         flash('Произошла ошибка при проверке', 'error')
