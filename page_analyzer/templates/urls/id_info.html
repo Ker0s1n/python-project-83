@@ -25,14 +25,16 @@
         <button type="submit" class="btn btn-dark">Запустить проверку</button>
     </form>
     <table class="mt-3 table table-bordered table-striped" data-test="checks">
-        <tr class="fw-bold">
-            <td>ID</td>
-            <td>Код ответа</td>
-            <td>h1</td>
-            <td>title</td>
-            <td>description</td>
-            <td>Дата создания</td>
-        </tr>
+        <thead>
+            <tr class="fw-bold">
+                <th>ID</th>
+                <th>Код ответа</th>
+                <th>h1</th>
+                <th>title</th>
+                <th>description</th>
+                <th>Дата создания</th>
+            </tr>
+        </thead>
         <tbody class="fs-6 fw-normal">
             {% for check in url_check %}
             <tr>
