@@ -34,7 +34,7 @@ def home_page():
     )
 
 
-@app.post('/')
+@app.post('/urls')
 def post_url():
     url = request.form.to_dict()
     parced_url = urlparse(url['url'])
