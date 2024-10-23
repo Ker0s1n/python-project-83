@@ -10,9 +10,9 @@
   <h1 class="display-1 text-center">Анализатор страниц</h1>
   <h3 class="text-center">Бесплатно проверяйте сайты на SEO-пригодность</h3>
   <form class="d-flex" action="{{ url_for('home_page') }}" method="post">
-      <div class="input-group">
+      <div class="input-group" type="submit">
         <span class="input-group-text" id="basic-addon3">Введите адрес</span>
-        <input type="submit" class="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4" placeholder="https://www.example.com" name="url" value="{{ search }}">
+        <input type="url" class="form-control" id="basic-url" aria-describedby="basic-addon3 basic-addon4" placeholder="https://www.example.com" name="url" value="{{ search }}">
         <button class="btn btn-primary text-uppercase" type="submit" id="button-addon2">Проверить</button>
       </div>
   </form>
