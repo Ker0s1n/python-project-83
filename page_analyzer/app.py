@@ -68,7 +68,7 @@ def post_url():
         if id is not None:
             flash('Страница уже существует', 'text-bg-warning')
             return redirect(url_for('get_url', id=id), code=302)
-        
+
         id = repo.add(normalized_url)
         flash('Страница успешно добавлена', 'text-bg-success')
         return redirect(url_for('get_url', id=id), code=302)
