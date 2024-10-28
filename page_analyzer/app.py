@@ -4,6 +4,7 @@ import psycopg2
 from dotenv import load_dotenv
 from flask import (
     Flask,
+    abort,
     render_template,
     request,
     redirect,
@@ -26,6 +27,16 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 repo = UrlRepository(psycopg2.connect(database_url))
 
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errors/not_found.html'), 404
+
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('errors/server_error.html'), 500
+
+
 @app.route('/')
 def home_page():
     errors = {}
@@ -44,7 +55,7 @@ def post_url():
     errors = validate_url(normalized_url)
 
     if errors:
-        flash('Некорректный URL', 'error')
+        flash('Некорректный URL', 'text-bg-danger')
         return render_template(
             'index.html',
             search=normalized_url,
@@ -53,11 +64,11 @@ def post_url():
 
     id = repo.get_id(normalized_url)
     if id is not None:
-        flash('Страница уже существует', 'warning')
+        flash('Страница уже существует', 'text-bg-warning')
         return redirect(url_for('get_url', id=id), code=302)
 
     id = repo.add(normalized_url)
-    flash('Страница успешно добавлена', 'success')
+    flash('Страница успешно добавлена', 'text-bg-success')
     return redirect(url_for('get_url', id=id), code=302)
 
 
@@ -67,10 +78,10 @@ def get_url(id):
     url_check = repo.get_checks(id)
 
     if not url_info:
-        return render_template('urls/not_found.html')
+        abort(404)
 
     return render_template(
-        'urls/id_info.html',
+        'urls/url_checks.html',
         url_info=url_info,
         url_check=url_check
     )
@@ -94,7 +105,7 @@ def post_url_check(id):
         response = requests.get(url_info.get('name'), timeout=0.3)
         response.raise_for_status()
     except requests.RequestException:
-        flash('Произошла ошибка при проверке', 'error')
+        flash('Произошла ошибка при проверке', 'text-bg-danger')
         return redirect(url_for('get_url', id=id))
 
     status = response.status_code
@@ -106,5 +117,5 @@ def post_url_check(id):
         analysis
     )
 
-    flash('Страница успешно проверена', 'success')
+    flash('Страница успешно проверена', 'text-bg-success')
     return redirect(url_for('get_url', id=id), code=302)

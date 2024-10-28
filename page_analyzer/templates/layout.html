@@ -11,26 +11,18 @@
     <header>
         <nav class="navbar bg-dark border-bottom border-body" data-bs-theme="dark">
             <form class="container-fluid justify-content-start">
-              <a class="btn btn-outline-light btn-lg me-3 text-capitalize" type="button" href="/">Анализатор страниц</a>
-              <a class="btn btn-outline-info" type="button" href="/urls">Сайты</a>
+              <a class="btn btn-outline-light btn-lg me-3 text-capitalize" type="button" href="{{ url_for('home_page') }}">Анализатор страниц</a>
+              <a class="btn btn-outline-info" type="button" href="{{ url_for('get_urls_list') }}">Сайты</a>
             </form>
           </nav>
     </header>
 
     {% with messages = get_flashed_messages(with_categories=True) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          {% if category=='error' %}
-          <h5 class="text-bg-danger p-3 text-center">{{ message }}</h5>
-          {% endif %}
-          {% if category=='success' %}
-          <h5 class="text-bg-success p-3 text-center">{{ message }}</h5>
-          {% endif %}
-          {% if category=='warning' %}
-          <h5 class="text-bg-warning p-3 text-center">{{ message }}</h5>
-          {% endif %}
-        {% endfor %}
-      {% endif %}
+      {% for category, message in messages %}
+        {% if messages %}
+          <h5 class= "{{ category }} p-3 text-center">{{ message }}</h5>
+        {% endif %}
+      {% endfor %}
     {% endwith %}
 
     <div id="content">
