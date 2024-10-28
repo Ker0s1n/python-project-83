@@ -17,19 +17,21 @@
           </nav>
     </header>
 
-    {% if messages %}
-      {% for category, message in messages %}
-      {% if category=='error' %}
-      <h5 class="text-bg-danger p-3 text-center">{{ message }}</h5>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          {% if category=='error' %}
+          <h5 class="text-bg-danger p-3 text-center">{{ message }}</h5>
+          {% endif %}
+          {% if category=='success' %}
+          <h5 class="text-bg-success p-3 text-center">{{ message }}</h5>
+          {% endif %}
+          {% if category=='warning' %}
+          <h5 class="text-bg-warning p-3 text-center">{{ message }}</h5>
+          {% endif %}
+        {% endfor %}
       {% endif %}
-      {% if category=='success' %}
-      <h5 class="text-bg-success p-3 text-center">{{ message }}</h5>
-      {% endif %}
-      {% if category=='warning' %}
-      <h5 class="text-bg-warning p-3 text-center">{{ message }}</h5>
-      {% endif %}
-      {% endfor %}
-    {% endif %}
+    {% endwith %}
 
     <div id="content">
       <h1 hidden>Проверка сайта на SEO-пригодность</h1>
