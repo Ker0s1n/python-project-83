@@ -1,6 +1,5 @@
 import os
 import requests
-import psycopg2
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -16,15 +15,16 @@ from page_analyzer.utilities import (
     parse_response,
     validate_url
 )
-from page_analyzer.url_analisys_repository import UrlRepository
+from page_analyzer.url_repository import (
+    DatabaseConnection,
+    UrlRepository
+)
 
 
 app = Flask(__name__)
 load_dotenv()
 database_url = os.getenv('DATABASE_URL')
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
-
-repo = UrlRepository(psycopg2.connect(database_url))
 
 
 @app.errorhandler(404)
@@ -62,60 +62,68 @@ def post_url():
             errors=errors
         ), 422
 
-    id = repo.get_id(normalized_url)
-    if id is not None:
-        flash('Страница уже существует', 'text-bg-warning')
+    with DatabaseConnection(database_url) as conn:
+        repo = UrlRepository(conn)
+        id = repo.get_id(normalized_url)
+        if id is not None:
+            flash('Страница уже существует', 'text-bg-warning')
+            return redirect(url_for('get_url', id=id), code=302)
+        
+        id = repo.add(normalized_url)
+        flash('Страница успешно добавлена', 'text-bg-success')
         return redirect(url_for('get_url', id=id), code=302)
-
-    id = repo.add(normalized_url)
-    flash('Страница успешно добавлена', 'text-bg-success')
-    return redirect(url_for('get_url', id=id), code=302)
 
 
 @app.route('/urls/<int:id>')
 def get_url(id):
-    url_info = repo.find(id)
-    url_check = repo.get_checks(id)
+    with DatabaseConnection(database_url) as conn:
+        repo = UrlRepository(conn)
+        url_info = repo.find(id)
+        url_check = repo.get_checks(id)
 
-    if not url_info:
-        abort(404)
+        if not url_info:
+            abort(404)
 
-    return render_template(
-        'urls/url_checks.html',
-        url_info=url_info,
-        url_check=url_check
-    )
+        return render_template(
+            'urls/url_checks.html',
+            url_info=url_info,
+            url_check=url_check
+        )
 
 
 @app.route('/urls')
 def get_urls_list():
-    urls = repo.get_content()
+    with DatabaseConnection(database_url) as conn:
+        repo = UrlRepository(conn)
+        urls = repo.get_content()
 
-    return render_template(
-        'urls/show_urls.html',
-        urls=urls
-    )
+        return render_template(
+            'urls/show_urls.html',
+            urls=urls
+        )
 
 
 @app.post('/urls/<int:id>/cheks')
 def post_url_check(id):
-    url_info = repo.find(id)
+    with DatabaseConnection(database_url) as conn:
+        repo = UrlRepository(conn)
+        url_info = repo.find(id)
 
-    try:
-        response = requests.get(url_info.get('name'), timeout=0.3)
-        response.raise_for_status()
-    except requests.RequestException:
-        flash('Произошла ошибка при проверке', 'text-bg-danger')
-        return redirect(url_for('get_url', id=id))
+        try:
+            response = requests.get(url_info.get('name'), timeout=0.3)
+            response.raise_for_status()
+        except requests.RequestException:
+            flash('Произошла ошибка при проверке', 'text-bg-danger')
+            return redirect(url_for('get_url', id=id))
 
-    status = response.status_code
-    analysis = parse_response(response)
+        status = response.status_code
+        analysis = parse_response(response)
 
-    id = repo.check(
-        url_info,
-        status,
-        analysis
-    )
+        id = repo.check(
+            url_info,
+            status,
+            analysis
+        )
 
-    flash('Страница успешно проверена', 'text-bg-success')
-    return redirect(url_for('get_url', id=id), code=302)
+        flash('Страница успешно проверена', 'text-bg-success')
+        return redirect(url_for('get_url', id=id), code=302)
