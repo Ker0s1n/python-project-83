@@ -13,14 +13,16 @@ class DatabaseConnection:
         )
         return self.conn
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, type, value, traceback):
         if self.conn:
             self.conn.close()
+        else:
+            raise
 
 
 class UrlRepository:
-    def __init__(self, conn):
-        self.conn = conn
+    def __init__(self, database_url):
+        self.conn = DatabaseConnection(database_url)
 
     def get_content(self):
         query = '''
@@ -43,39 +45,43 @@ class UrlRepository:
         ORDER BY urls.id
         DESC
         '''
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query)
-            urls_all = cur.fetchall()
-            return urls_all
+        with self.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                urls_all = cur.fetchall()
+                return urls_all
 
-    def find(self, id):
+    def find_id(self, id):
         query = 'SELECT * FROM urls WHERE id = %s'
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, (id,))
-            url_info = cur.fetchone()
-        if not url_info:
-            return None
-        return url_info
+        with self.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (id,))
+                url_info = cur.fetchone()
+                if not url_info:
+                    return None
+                return url_info
 
-    def get_id(self, url):
+    def find_url(self, url):
         query = 'SELECT id, name FROM urls WHERE name = %s'
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, (url,))
-            url_id = cur.fetchone()
-            if not url_id:
-                return None
-            return url_id['id']
+        with self.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (url,))
+                url_info = cur.fetchone()
+                if not url_info:
+                    return None
+                return url_info
 
-    def add(self, url):
+    def add_url(self, url):
         query = '''
         INSERT INTO urls (name) VALUES (%s)
         RETURNING id
         '''
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, (url,))
-            id = cur.fetchone()['id']
-            self.conn.commit()
-            return id
+        with self.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (url,))
+                id = cur.fetchone()['id']
+                conn.commit()
+                return id
 
     def check(self, url_check, status_code, analysis):
         query = '''
@@ -83,23 +89,33 @@ class UrlRepository:
         url_id, status_code, h1, title, description)
         VALUES (%s, %s, %s, %s, %s)
         '''
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                query,
-                (
-                    url_check.get('id'),
-                    status_code,
-                    analysis.get('h1'),
-                    analysis.get('title'),
-                    analysis.get('description')
+        query_result = '''
+        SELECT DISTINCT ON (url_id) *
+            FROM url_cheks
+            WHERE url_id = %s
+            ORDER BY url_id, created_at DESC
+        '''
+        with self.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    query,
+                    (
+                        url_check.get('id'),
+                        status_code,
+                        analysis.get('h1'),
+                        analysis.get('title'),
+                        analysis.get('description')
+                    )
                 )
-            )
-            self.conn.commit()
-            return url_check.get('id')
+                conn.commit()
+                cur.execute(query_result, (url_check.get('id'),))
+                check_info = cur.fetchone()
+                return check_info
 
     def get_checks(self, id):
         query = 'SELECT * FROM url_cheks WHERE url_id = %s ORDER BY id DESC'
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(query, (id,))
-            url_checks_all = cur.fetchall()
-            return url_checks_all
+        with self.conn as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (id,))
+                url_checks_all = cur.fetchall()
+                return url_checks_all
