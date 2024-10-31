@@ -11,18 +11,19 @@ class DatabaseConnection:
             self.database_url,
             cursor_factory=RealDictCursor
         )
-        return self.conn
+        self.cursor = self.conn.cursor()
+        return self
 
     def __exit__(self, type, value, traceback):
         if self.conn:
             self.conn.close()
         else:
-            raise
+            print(f'Exception! Error detected: {value} with {type}')
 
 
 class UrlRepository:
     def __init__(self, database_url):
-        self.conn = DatabaseConnection(database_url)
+        self.db = DatabaseConnection(database_url)
 
     def get_content(self):
         query = '''
@@ -45,43 +46,39 @@ class UrlRepository:
         ORDER BY urls.id
         DESC
         '''
-        with self.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(query)
-                urls_all = cur.fetchall()
-                return urls_all
+        with self.db as db:
+            db.cursor.execute(query)
+            urls_all = db.cursor.fetchall()
+            return urls_all
 
     def find_id(self, id):
         query = 'SELECT * FROM urls WHERE id = %s'
-        with self.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (id,))
-                url_info = cur.fetchone()
-                if not url_info:
-                    return None
-                return url_info
+        with self.db as db:
+            db.cursor.execute(query, (id,))
+            url_info = db.cursor.fetchone()
+            if not url_info:
+                return None
+            return url_info
 
     def find_url(self, url):
         query = 'SELECT id, name FROM urls WHERE name = %s'
-        with self.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (url,))
-                url_info = cur.fetchone()
-                if not url_info:
-                    return None
-                return url_info
+        with self.db as db:
+            db.cursor.execute(query, (url,))
+            url_info = db.cursor.fetchone()
+            if not url_info:
+                return None
+            return url_info
 
     def add_url(self, url):
         query = '''
         INSERT INTO urls (name) VALUES (%s)
         RETURNING id
         '''
-        with self.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (url,))
-                id = cur.fetchone()['id']
-                conn.commit()
-                return id
+        with self.db as db:
+            db.cursor.execute(query, (url,))
+            id = db.cursor.fetchone()['id']
+            db.conn.commit()
+            return id
 
     def check(self, url_check, status_code, analysis):
         query = '''
@@ -95,27 +92,25 @@ class UrlRepository:
             WHERE url_id = %s
             ORDER BY url_id, created_at DESC
         '''
-        with self.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    query,
-                    (
-                        url_check.get('id'),
-                        status_code,
-                        analysis.get('h1'),
-                        analysis.get('title'),
-                        analysis.get('description')
-                    )
+        with self.db as db:
+            db.cursor.execute(
+                query,
+                (
+                    url_check.get('id'),
+                    status_code,
+                    analysis.get('h1'),
+                    analysis.get('title'),
+                    analysis.get('description')
                 )
-                conn.commit()
-                cur.execute(query_result, (url_check.get('id'),))
-                check_info = cur.fetchone()
-                return check_info
+            )
+            db.conn.commit()
+            db.cursor.execute(query_result, (url_check.get('id'),))
+            check_info = db.cursor.fetchone()
+            return check_info
 
     def get_checks(self, id):
         query = 'SELECT * FROM url_cheks WHERE url_id = %s ORDER BY id DESC'
-        with self.conn as conn:
-            with conn.cursor() as cur:
-                cur.execute(query, (id,))
-                url_checks_all = cur.fetchall()
-                return url_checks_all
+        with self.db as db:
+            db.cursor.execute(query, (id,))
+            url_checks_all = db.cursor.fetchall()
+            return url_checks_all
